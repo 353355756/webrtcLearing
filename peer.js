@@ -1,5 +1,5 @@
-var yourvideo = document.querySelector('yours');
-var theirvideo = document.querySelector('theire');
+var yourvideo = document.querySelector('#yours');
+var theirvideo = document.querySelector('#theire');
 var yourConnection, theirConnection;
 if(hasUserMedia()){
 
@@ -24,13 +24,28 @@ if(hasUserMedia()){
 
 function startPeerConnection(stream){
     var configuration = {
-        "iceServers" : [{"url":"stun:127.0.0.1:9876"}]
+        //"iceServers" : [{"url":"stun:127.0.0.1:9876"}]
     };
-    //yourConnection = new webkitPeerConnection(configuration);
-    //theirConnection = new webkitPeerConnection(configuration);
+    yourConnection = new RTCPeerConnection(configuration);
+    theirConnection = new RTCPeerConnection(configuration);
 
-    yourConnection = new webkitPeerConnection();
-    theirConnection = new webkitPeerConnection();
+      // Setup stream listening
+    yourConnection.addStream(stream);
+    theirConnection.onaddstream = function (e) {
+        theirVideo.src = window.URL.createObjectURL(e.stream);
+    };
+
+    yourConnection.onicecandidate= function (event) {
+        if(event.candidate){
+            theirConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        }
+    }
+
+    theirConnection.onicecandidate= function (event) {
+        if(event.candidate){
+            yourConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+        }
+    }
 
     yourConnection.createOffer(function (offer) {
         yourConnection.setLocalDescription(offer);
